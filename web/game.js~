@@ -1,0 +1,308 @@
+// Declare global variable for setLoadImg the game
+var loadContainer = document.getElementById('loadContainer');
+var loadImg = document.getElementById("loadImg");
+var playerForm = document.getElementById("playerForm");
+var loadTimeCD = 3000;
+// For model prediction
+var camera = document.getElementById("playerCamera");
+var bgm = document.getElementById("bgm");
+var canvas = document.getElementById("cameraCap");
+var context = canvas.getContext("2d");
+// For game control
+var startBtn = document.getElementById("start");
+var timeImg = document.getElementById("gameTimer");
+var rpsImg = document.getElementById("rps");
+var timeCD = 3200;
+// For game result
+var fightTxt = document.getElementById("fightTxt");
+var gameHistory = new Array();
+var rps = new Array(["铁掌", "形意拳", "弹指神通"],
+					["绵掌", "太祖长拳", "参合指"],
+					["天罗地网", "空明拳", "一阳指"],
+					["黯然销魂掌", "七伤拳", "拈花指"],
+					["降龙十八掌", "太极拳", "六脉神剑"]);
+var enemy = new Array(["小兵甲", "豪侠乙", "武师丙"],
+					  ["朱聪", "彭连虎", "杨康"],
+					  ["欧阳克", "丘处机", "梅超风"],
+					  ["周伯通", "洪七公", "丁春秋"],
+					  ["杨过", "萧峰", "郭靖"]);
+var fight = new Array(["砰的一声响，重重打中l胸口，跟着喀喇喇几声，肋骨断了几根。",
+					  "l道：“好俊的功夫！”话未说毕，口中一股鲜血跟着直喷了出来。",
+					  "w手掌扬处，砰砰两声，l应声倒地",
+					  "w一掌拍出，击在l脑袋右侧，登时泥尘纷飞，地下现出一坑"],
+					  ["w拳锋尚未相触，已发出噼噼啪啪的轻微爆裂之声",
+					  "l吃了一惊，不敢硬接",
+					  "l不及阻挡，身受重伤"],
+					  ["只听得嗤嗤两响，两粒小石子射将过来，带着破空之声，直冲l穴道",
+					  "两指相触，l只觉右臂一震，全身发热，腾腾腾退出五六步"],
+					  ["w虽然受伤，仍非片刻之间能被制服",
+					  "l凝神拆招，觉得对方不可轻视"]);
+var playerID = "";
+var diff = "";
+var enemyLv = 0;
+var historyCount = 0;
+var playerHp = 0;
+var enemyHp = 3;
+var enemyIndex = Math.floor(Math.random()*3);
+
+// Loading pop up images
+function setLoadImg(n){
+	loadContainer.style.display = "block";
+	if (n == 0){
+		loadImg.src = "img/loading.gif";
+		bgm.pause();
+		bgm.src = "bgm/start_bgm.mp3";
+		bgm.play();
+	}
+	else if(n == 1){
+		loadImg.src = "img/lose.jpg";
+		bgm.pause();
+		bgm.src = "bgm/lose.mp3";
+		bgm.play();
+	}
+	else if(n == 2){
+		loadImg.src = "img/win.jpg";
+		bgm.pause();
+		bgm.src = "bgm/win.mp3";
+		bgm.play();
+	}
+}
+
+function loadCountDown(){
+	if (loadTimeCD > 0){
+		setTimeout(loadCountDown, 1000);
+		console.log(loadTimeCD);
+	}
+	else {
+		loadContainer.style.display = "none";
+		playerForm.style.display = "block";
+	}
+	loadTimeCD -= 1000;
+}
+
+// Control difficulty and hp
+function setDifficulty(li){
+	document.getElementById("diff").value = li.innerHTML;
+	document.getElementById("diffTxt").innerHTML = li.innerHTML;
+}
+
+function healPlayer(){
+	if (diff == "无名小卒"){
+		playerHp += 15;
+	}
+	if (diff == "声名鹊起"){
+		playerHp += 12;
+	}
+	if (diff == "技冠群雄"){
+		playerHp += 9;
+	}
+	if (diff == "一代宗師"){
+		playerHp += 6;
+	}
+	if (diff == "震古烁今"){
+		playerHp += 3;
+	}
+}
+
+function setPlayerInfo(){
+	playerID = document.getElementById("playerName").value;
+	diff = document.getElementById("diff").value;
+	if (playerID == ''){
+		alert("大丈夫行不改姓坐不更名，何需遮遮掩掩！");
+		return;
+	}
+	else {
+		healPlayer();
+	}
+	playerForm.style.display = "none";
+}
+
+// Load the model and enable start button
+async function loadModel(){
+	model = await tf.loadModel("https://pphp2019.do.am/model/model.json");
+	return "completed";
+}
+
+// Compatible functions to initialize the game
+function startCamera(){
+	if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+		navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream){
+			camera.srcObject = stream;
+			camera.play();
+		});
+	}
+	else if (navigator.getUserMedia){ // Standard
+		navigator.getUserMedia({ video: true }, function(stream){
+			camera.src = stream;
+			camera.play();
+		}, errBack);
+	}
+	else if (navigator.webkitGetUserMedia){ // WebKit-prefixed
+		navigator.webkitGetUserMedia({ video: true }, function(stream){
+			camera.src = window.webkitURL.createObjectURL(stream);
+			camera.play();
+		}, errBack);
+	}
+	else if (navigator.mozGetUserMedia){ // Mozilla-prefixed
+		navigator.mozGetUserMedia({ video: true }, function(stream){
+			camera.srcObject = stream;
+			camera.play();
+		}, errBack);
+	}
+}
+
+function startGame(){
+	// Load the loading image and bgm
+	setLoadImg(0);
+	// Add event listeners for playerForm and startBtn
+	document.querySelector('#playerFormSubmit').addEventListener('click',function(e){
+		e.preventDefault();
+	},false);
+	document.querySelector('#start').addEventListener('mouseover', function(){
+		this.src = 'img/start_act.png';
+	});
+	document.querySelector('#start').addEventListener('mouseout', function(){
+		this.src = 'img/start.png';
+	});
+	/*
+	document.querySelector('#playerForm').addEventListener('submit',function(e){
+		e.preventDefault();
+	},false);
+	*/
+	// Load the model to start the game
+	x = loadModel();
+	x.then(function (){
+		loadCountDown();
+		startCamera();
+		fightTxt.innerHTML = "华山最大的线上论剑开始了!";
+	})
+}
+
+// Below are functions to implement rps game"s logic
+function startRound(){
+	var cpu = Math.floor(Math.random()*3);
+	// Main count down logic
+	if(timeCD >= 1000){
+		setTimeout("startRound()", 1000);
+		timeImg.src = "img/time/" + Math.floor(timeCD / 1000) + ".jpg";
+	}
+	// Buffer time to smooth changes in rps images
+	else if (timeCD > 0 && timeCD <= 200){
+		setTimeout("startRound()", 200);
+		timeImg.src = "img/time/0.jpg";
+	}
+	// Compute result of the game
+	else {
+		timeImg.src = "img/vs.jpg";
+		rpsImg.src = "img/rps/" + cpu + ".jpg";
+		context.drawImage(camera, 0, 0, 300, 150); // ??? not same as specification
+		camera.pause();
+		showResult(cpu, predict(canvas)); // 0 paper, 1 rock, 2 scissors
+		return; // return to avoid predecrement defore countdown
+	}
+	timeCD -= 1000;
+}
+
+// Convert image to model input, then predict player's hand pose
+async function predict(canvas){
+	var img = tf.fromPixels(canvas); // get image
+	img = tf.image.resizeBilinear(img, [224, 224]).toFloat(); // resize
+	img = tf.scalar(1.0).sub(img.div(tf.scalar(255.0))); // convert to 0-1
+	img = img.expandDims(0); // convert to 4D array
+	prob = model.predict(img).dataSync();
+	return prob.indexOf(Math.max(...prob)); // return a Promise due to async
+}
+
+// Update the statistics after each round
+function showHp(){
+	document.getElementById("playerStat").innerHTML="【" + playerID + "】气血: " + playerHp;
+	document.getElementById("enemyStat").innerHTML="【" + enemy[enemyLv][enemyIndex] + "】气血: " + enemyHp;
+}
+
+function updateHistory(cpu, player){
+	var historyHtml = "";
+	if (historyCount <= 5){
+		for (i = historyCount - 1; i >= 0; i--){
+			historyHtml += gameHistory[i] + "<br>";
+		}
+	}
+	else {
+		// remove the earliest record
+		for (i = 1; i < historyCount; i++){
+			gameHistory[i - 1] = gameHistory[i];
+		}
+		historyCount = 5;
+		for(i = historyCount - 1; i >= 0; i--){
+			historyHtml += gameHistory[i] + "<br>";
+		}
+	}
+	document.getElementById("history").innerHTML = historyHtml;
+	console.log(historyHtml);
+	console.log("player: " + numToRps(player));
+	console.log("enemy: " + numToRps(cpu));		
+}
+
+function checkProceed(){
+	if (playerHp <= 0){
+		setLoadImg(1); //player lose
+	}
+	else if(enemyLv == 4 && enemyHp <= 0){
+		setLoadImg(2); //player win
+	}
+	else if(enemyHp <= 0){ //player proceed to next round
+		enemyIndex = Math.floor(Math.random()*3);
+		enemyLv += 1;
+		enemyHp = 3 + enemyLv * 3;
+		healPlayer();
+		showHp();
+	}
+}
+
+function describeFight(winner, loser, rps){
+	r = Math.floor(Math.random()*fight[rps].length);
+	txt = fight[rps][r].replace("w",winner);
+	txt = txt.replace("l",loser);
+	return txt;
+}
+
+function showResult(cpu, promise) {
+	promise.then(function (player){
+		var fightTxt = "NaN";
+		if (cpu == player){
+			fightTxt = describeFight(playerID, enemy[enemyLv][enemyIndex], 3);
+		}
+		else if ((cpu - player == 1) || (player - cpu == 2)){
+			fightTxt = describeFight(playerID, enemy[enemyLv][enemyIndex], player);
+			enemyHp -= 1;
+		}
+		else{
+			fightTxt = describeFight(enemy[enemyLv][enemyIndex], playerID, cpu);
+			playerHp -= 1;
+		}
+		var fightHtml = "<span style=\"float: left; margin: auto auto auto 20px;\">" + 
+						playerID + ": " + numToRps(player) + "</span>" +
+						"<span>" + fightTxt + "</span>" +
+						"<span style=\"float: right; margin: auto 20px auto auto;\">" + 
+						enemy[enemyLv][enemyIndex] + ": " + numToRps(cpu) + "</span>";
+		fightTxt.innerHTML = fightHtml;
+		gameHistory[historyCount++] = fightHtml;
+		showHp();
+		updateHistory(cpu, player);
+		checkProceed();
+		timeCD = 3200; // reset timer
+	})
+}
+
+function restart(){
+	if (timeCD == 3200){
+		rpsImg.src= "img/rps/rps.gif";
+		camera.play();
+		startRound();
+	}
+}
+
+function numToRps(n){
+	return rps[enemyLv][n];
+}
+
+startGame();
