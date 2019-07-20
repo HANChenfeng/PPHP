@@ -39,6 +39,7 @@ var diff;
 var stand;
 var standShift;
 var spy;
+var cpu; // the choice made by the computer
 
 var playerHp;
 var totPlayerHp;
@@ -216,6 +217,9 @@ function continueDialog(){
 							"游戏玩法介绍：按下此按钮后，将手放在镜头前面并做出石头，剪刀或布的动作，",
   							"在倒数结束后你将和电脑进行比拼。",
   							"谨记：掌法（布）克制拳法（石头），拳法克制指法（剪刀），指法克制掌法。",
+							"每次按下战斗的按钮时，底下的hash将会更新，使用md5 decode后会得到电脑的选项，",
+							"0为石头，1为布，2为剪刀，"
+							"如此则可证明电脑并无作弊。",
   							"为了增添趣味性，制作团队引入了连击系统，",
   							"第一次扣一点气血，第二次三倍伤害，第三次气血直接清空，",
   							"请谨慎思考您的策略。",
@@ -548,7 +552,6 @@ function startGame(){
 
 // Below are functions to implement rps game"s logic
 function startRound(){
-	var cpu = Math.floor(Math.random()*3);
 	// Main count down logic
 	if(timeCD >= 1000){
 		setTimeout("startRound()", 1000);
@@ -688,6 +691,7 @@ function checkProceed(){
 	// player die
 	else if (playerHp <= 0){
 		setLoadImg(1);
+		hideHp();
 		switchBtn("continue", continueDialog);
 		dialogX = 20;
 	}
@@ -770,6 +774,8 @@ function restart(){
 	if (timeCD == 3200){
 		rpsImg.src= "img/rps/rps.gif";
 		camera.play();
+		cpu = Math.floor(Math.random()*3);
+		document.getElementById("hash").innerHTML = "hash: " + md5(cpu);
 		startRound();
 	}
 }
