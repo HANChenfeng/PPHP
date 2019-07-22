@@ -124,24 +124,20 @@ function setStand(li){
 function healPlayer(){
 	if (diff == "无名小卒"){
 		playerHp += 15;
-		totPlayerHp += 15;
 	}
 	if (diff == "声名鹊起"){
 		playerHp += 12;
-		totPlayerHp += 12;
 	}
 	if (diff == "技冠群雄"){
 		playerHp += 9;
-		totPlayerHp += 9;
 	}
 	if (diff == "一代宗師"){
 		playerHp += 6;
-		totPlayerHp += 6;
 	}
 	if (diff == "震古烁今"){
 		playerHp += 3;
-		totPlayerHp += 3;
 	}
+	totPlayerHp = playerHp;
 }
 
 function setPlayerInfo(){
@@ -217,8 +213,8 @@ function continueDialog(){
 							"游戏玩法介绍：按下此按钮后，将手放在镜头前面并做出石头，剪刀或布的动作，",
   							"在倒数结束后你将和电脑进行比拼。",
   							"谨记：掌法（布）克制拳法（石头），拳法克制指法（剪刀），指法克制掌法。",
-							"每次按下战斗的按钮时，底下的hash将会更新，使用md5 decode后会得到电脑的选项，",
-							"0为石头，1为布，2为剪刀，",
+							"每次按下战斗的按钮时，底下的hash将会更新。使用md5 decode后会得到电脑的选项，",
+							"0为布，1为石頭，2为剪刀，",
 							"如此则可证明电脑并无作弊。",
   							"为了增添趣味性，制作团队引入了连击系统，",
   							"第一次扣一点气血，第二次三倍伤害，第三次气血直接清空，",
