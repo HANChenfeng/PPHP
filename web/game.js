@@ -480,7 +480,7 @@ function continueDialog(){
 						   "如今的江湖你可谓只手遮天，只一号令，门下无数人为你奔走。",
 						   playerID + "（暗道）：尽管中间发生了点小插曲，但只要结果达到便足够了。",
 						   "第六章：武林神话",
-						   "？？？：呵呵，" + "preEnemy" + "不过是我放在门面的傀儡，但打狗还需看主人，少侠恐怕有失礼数。",
+						   "？？？：呵呵，" + "oppoEnemy" + "不过是我放在门面的傀儡，但打狗还需看主人，少侠恐怕有失礼数。",
 						   "东方不败：在下圣教教主——东方不败，请出招！"],
 
 						  ["东方不败：没想到少侠武功出神入化，在下心服口服。",
@@ -492,6 +492,7 @@ function continueDialog(){
 		if(enemyLv < 6){
 			dialog[dialogX][dialogY] = dialog[dialogX][dialogY].replace(/curEnemy/g, enemy[stand][enemyLv][enemyIndex[enemyLv]]);
 			dialog[dialogX][dialogY] = dialog[dialogX][dialogY].replace(/preBossEnemy/g, enemy[Math.abs(stand - 1)][enemyLv][enemyIndex[enemyLv]]);
+			dialog[dialogX][dialogY] = dialog[dialogX][dialogY].replace(/oppoEnemy/g, enemy[Math.abs(stand - 1)][4][enemyIndex[4]]);
 		}
 		if(enemyLv > 0){
 			dialog[dialogX][dialogY] = dialog[dialogX][dialogY].replace(/preEnemy/g, enemy[stand][enemyLv-1][enemyIndex[enemyLv-1]]);
@@ -583,7 +584,7 @@ async function predict(canvas){
 // Update the statistics after each round
 function showHp(){
 	var opponent;
-	if((enemyLv == 4 && standShift) || spy){
+	if(enemyLv == 4 && standShift || spy && enemyLv == 5){
 		opponent = enemy[Math.abs(stand-1)][enemyLv][enemyIndex[enemyLv]];
 	}
 	else {
@@ -622,8 +623,11 @@ function updateHistory(cpu, player){
 }
 
 function checkProceed(){
+	if(enemyLv == 5 && enemyHp <= 0){
+		setLoadImg(2); //player win
+	}
 	if(enemyLv == 4 && enemyHp <= 0){
-		if(standShift && enemyLv == 4){ // 潜伏路线
+		if(standShift){ // 潜伏路线
 			se.src="se/levelUp.mp3";
 			standShift = false;
 			spy = true;
@@ -668,6 +672,7 @@ function checkProceed(){
 		if(enemyHp <= 0){
 			dialogX += 1;
 			switchBtn("continue", continueDialog);
+			healPlayer();
 		}
 		else {
 			standShift = true;
@@ -678,11 +683,12 @@ function checkProceed(){
 			else {
 				dialogX = 6;
 			}
+			playerHp = 12;
+			totPlayerHp = 12;
 		}
 		enemyLv += 1;
 		enemyHp = 3 + enemyLv * 3;
 		totEnemyHp = enemyHp;
-		healPlayer();
 	}
 	// player die
 	else if (playerHp <= 0){
