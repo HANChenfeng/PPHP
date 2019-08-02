@@ -1,0 +1,1 @@
+{"outputs": {"object": [{"name": "hand", "bndbox": {"xmin": 31, "ymin": 43, "xmax": 255, "ymax": 195}}]}, "size": {"width": 300, "height": 200, "depth": 3}}
